@@ -1,5 +1,5 @@
 
-# Weather Dashboard Mockup
+# Room Conditions Dashboard
 
 React + TypeScriptで実装した室内環境ダッシュボードです。気温・湿度・気圧の現在値、過去24時間の一覧、過去48時間のグラフを表示します。
 
