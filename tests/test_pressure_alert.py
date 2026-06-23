@@ -1,7 +1,10 @@
 from __future__ import annotations
 
+import os
 import unittest
 from datetime import datetime, timedelta
+from pathlib import Path
+from unittest.mock import Mock, patch
 
 from scripts.pressure_alert import (
     AlertResult,
@@ -9,6 +12,7 @@ from scripts.pressure_alert import (
     Measurement,
     build_discord_payload,
     evaluate_alert,
+    load_dotenv,
     parse_measurement_lines,
     should_notify,
 )
@@ -28,6 +32,32 @@ def measurements_with_final_drop() -> list[Measurement]:
 
 
 class PressureAlertTests(unittest.TestCase):
+    def test_dotenv_loads_values_without_overwriting_environment(self) -> None:
+        dotenv_path = Mock(spec=Path)
+        dotenv_path.exists.return_value = True
+        dotenv_path.read_text.return_value = "\n".join(
+            [
+                "# local settings",
+                "DISCORD_WEBHOOK_URL='https://example.invalid/webhook'",
+                "PRESSURE_BASELINE_DAYS=14 # two weeks",
+                "PRESSURE_MINIMUM_LEVEL=2",
+            ]
+        )
+
+        with patch.dict(
+            os.environ,
+            {"PRESSURE_MINIMUM_LEVEL": "3"},
+            clear=True,
+        ):
+            load_dotenv(dotenv_path)
+
+            self.assertEqual(
+                os.environ["DISCORD_WEBHOOK_URL"],
+                "https://example.invalid/webhook",
+            )
+            self.assertEqual(os.environ["PRESSURE_BASELINE_DAYS"], "14")
+            self.assertEqual(os.environ["PRESSURE_MINIMUM_LEVEL"], "3")
+
     def test_space_separated_measurements_are_supported(self) -> None:
         measurements = parse_measurement_lines(
             [

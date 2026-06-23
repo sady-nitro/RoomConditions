@@ -8,6 +8,7 @@ import csv
 import json
 import math
 import os
+import re
 import statistics
 import sys
 import time
@@ -31,6 +32,36 @@ LEVEL_COLORS = {
     2: 0xF97316,
     3: 0xEF4444,
 }
+
+ENV_KEY_PATTERN = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*$")
+
+
+def load_dotenv(path: Path) -> None:
+    """Load .env values without overwriting variables already in the environment."""
+    if not path.exists():
+        return
+
+    for line_number, raw_line in enumerate(
+        path.read_text(encoding="utf-8").splitlines(), start=1
+    ):
+        line = raw_line.strip()
+        if not line or line.startswith("#"):
+            continue
+        if line.startswith("export "):
+            line = line[7:].lstrip()
+
+        key, separator, raw_value = line.partition("=")
+        key = key.strip()
+        if not separator or not ENV_KEY_PATTERN.fullmatch(key):
+            raise ValueError(f"{path}:{line_number}: invalid .env entry")
+
+        value = raw_value.strip()
+        if len(value) >= 2 and value[0] == value[-1] and value[0] in {"'", '"'}:
+            value = value[1:-1]
+        else:
+            value = re.split(r"\s+#", value, maxsplit=1)[0].rstrip()
+
+        os.environ.setdefault(key, value)
 
 
 @dataclass(frozen=True)
@@ -465,6 +496,13 @@ def build_parser() -> argparse.ArgumentParser:
 
 
 def main(argv: list[str] | None = None) -> int:
+    repository_root = Path(__file__).resolve().parents[1]
+    try:
+        load_dotenv(repository_root / ".env")
+    except (OSError, UnicodeError, ValueError) as error:
+        print(f"ERROR: {error}", file=sys.stderr)
+        return 2
+
     args = build_parser().parse_args(argv)
 
     try:

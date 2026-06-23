@@ -64,3 +64,13 @@ python scripts/pressure_alert.py
 - `DISCORD_ROLE_ID`: レベル3でメンションするDiscordロールID
 - `DISCORD_MENTION_LEVEL`: ロールメンションを開始するレベル
   
+### ローカルの `.env` を使う
+
+`.env.example` をリポジトリ直下の `.env` にコピーし、Webhook URLなどを設定してください。
+
+```sh
+cp .env.example .env
+python scripts/pressure_alert.py
+```
+
+`.env` はGitの管理対象外です。OSや実行環境に同名の環境変数が設定されている場合は、その値が `.env` より優先されます。
