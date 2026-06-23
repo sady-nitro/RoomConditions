@@ -141,3 +141,7 @@ dist
 vite.config.js.timestamp-*
 vite.config.ts.timestamp-*
 .vite/
+
+# Pressure alert runtime state
+.pressure-alert-state.json
+.pressure-alert-state.json.tmp
